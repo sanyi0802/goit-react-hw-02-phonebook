@@ -1,32 +1,69 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { nanoid } from 'nanoid';
 import ContactForm from './ContactForm';
 import Filter from './Filter';
 import ContactList from './ContactList';
 
-const App = () => {
-  const [contacts, setContacts] = useState([]);
-  const [filter, setFilter] = useState('');
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      contacts: [],
+      filter: '',
+    };
+  }
 
-  useEffect(() => {
+  componentDidMount() {
     const savedContacts = JSON.parse(localStorage.getItem('contacts')) || [];
-    setContacts(savedContacts);
-  }, []);
+    this.setState({ contacts: savedContacts });
+  }
 
-  useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
+  componentDidUpdate() {
+    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+  }
 
-  const addContact = ({ name, number }) => {
-    const isDuplicate = contacts.some(
-      (contact) => contact.name.toLowerCase() === name.toLowerCase()
-    );
+  addContact = ({ name, number }) => {
+    const { contacts } = this.state;
+    const isDuplicate = contacts.some(contact => contact.name.toLowerCase() === name.toLowerCase());
     if (isDuplicate) {
       alert(`${name} is already in the contacts.`);
       return;
     }
 
+    const newContact = {
+      id: nanoid(),
+      name,
+      number,
+    };
+    this.setState({ contacts: [...contacts, newContact] });
+  };
+
+  deleteContact = (id) => {
+    this.setState({ contacts: this.state.contacts.filter(contact => contact.id !== id) });
+  };
+
+  handleFilterChange = (newFilter) => {
+    this.setState({ filter: newFilter });
+  };
+
+  render() {
+    const { contacts, filter } = this.state;
+    const filteredContacts = contacts.filter(contact => contact.name.toLowerCase().includes(filter.toLowerCase()));
+
+    return (
+      <div>
+        <h1>Phonebook</h1>
+        <ContactForm onAddContact={this.addContact} />
+        <h2>Contacts</h2>
+        <Filter filter={filter} onFilterChange={this.handleFilterChange} />
+        <ContactList contacts={filteredContacts} onDeleteContact={this.deleteContact} />
+      </div>
+    );
+  }
+}
+
+export default App;
     const newContact = {
       id: nanoid(),
       name,
